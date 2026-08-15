@@ -35,7 +35,7 @@ namespace PtraceModule
         public:
             Object() = delete;
 
-            std::optional<Object> instantiate()
+            static std::optional<Object> instantiate()
             {
                 DataStructure temporary_data_structure{"test",  "test2"};
                 return Object(State::Detached, std::move(temporary_data_structure));
