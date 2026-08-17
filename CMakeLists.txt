@@ -4,6 +4,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_executable(Tinkerer main.cpp
 io_helper.h
 ptrace_module.h
+ptrace_module.cpp
 
 )
 

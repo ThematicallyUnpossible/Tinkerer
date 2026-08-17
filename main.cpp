@@ -10,7 +10,12 @@ int main(int argc, char* argv[]){
         return 1;
     }
 
-    std::optional<PtraceModule::Object> test = PtraceModule::Object::instantiate(argv[1]);
-    std::cout << test->peek_data().m_string_target_pid;
+    std::optional<PtraceModule::Object> PtraceModuleObject = PtraceModule::Object::instantiate(argv[1]);
+    if(!PtraceModuleObject){
+        std::cerr << "Unable to construct PtraceModule object."  << "\n";
+    }
+
+
+
     return 0;  
 }
