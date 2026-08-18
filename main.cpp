@@ -15,6 +15,7 @@ int main(int argc, char* argv[]){
         std::cerr << "Unable to construct PtraceModule object."  << "\n";
     }
 
+    std::cout << PtraceModuleObject->peek_data().m_string_target_base << "\n";
 
 
     return 0;  
