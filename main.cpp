@@ -11,11 +11,13 @@ int main(int argc, char* argv[]){
     }
 
     std::optional<PtraceModule::Object> PtraceModuleObject = PtraceModule::Object::instantiate(argv[1]);
-    if(!PtraceModuleObject){
+    if(!PtraceModuleObject)
+    {
         std::cerr << "Unable to construct PtraceModule object."  << "\n";
     }
 
-    std::cout << PtraceModuleObject->peek_data().m_string_target_base << "\n";
+    std::cout << "Program Entry : "<< PtraceModuleObject->peek_data().m_string_target_base << "\n";
+    std::cout << "Program libc Base  : "<< PtraceModuleObject->peek_data().m_string_target_libc_base << "\n";
 
 
     return 0;  

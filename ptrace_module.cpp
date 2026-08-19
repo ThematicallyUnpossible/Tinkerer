@@ -61,6 +61,16 @@ std::optional<PtraceModule::Object> PtraceModule::Object::instantiate(const std:
                 return std::nullopt;
             }
 
+            std::optional<std::string> target_libc_base = string_find_base(temporary.m_string_target_pid, "libc");
+            if(target_libc_base)
+            {
+                temporary.m_string_target_libc_base = target_libc_base.value();
+            }
+            else 
+            {
+                return std::nullopt;
+            }
+
             return Object(std::move(temporary));
         }
     }

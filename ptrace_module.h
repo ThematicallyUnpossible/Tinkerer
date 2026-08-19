@@ -12,6 +12,7 @@ namespace PtraceModule
         std::string m_string_target_pid{};
 
         std::string m_string_target_base{};
+        std::string m_string_target_libc_base{};
     };
 
     enum class State
