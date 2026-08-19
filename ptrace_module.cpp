@@ -61,6 +61,9 @@ std::optional<PtraceModule::Object> PtraceModule::Object::instantiate(const std:
                 return std::nullopt;
             }
 
+            //////////////////////////////////////////
+            /////////GET////PROGRAM///LIBC////BASE////
+            //////////////////////////////////////////
             std::optional<std::string> target_libc_base = string_find_base(temporary.m_string_target_pid, "libc");
             if(target_libc_base)
             {
@@ -76,6 +79,13 @@ std::optional<PtraceModule::Object> PtraceModule::Object::instantiate(const std:
     }
     return std::nullopt;
 }
+
+bool load_library(PtraceModule::LibMeta lib_meta)
+{
+    //wip
+    return false;
+}
+
 
 const PtraceModule::DataStructure& PtraceModule::Object::peek_data() const
 {
