@@ -1,4 +1,5 @@
 #include "ptrace_module.h"
+#include "io_helper.h"
 #include <iostream>
 #include <fstream>
 #include <filesystem>
@@ -24,6 +25,17 @@ namespace
         
         return std::nullopt;
     }
+
+    void DEBUG_PRINT_LOADABLE_LIST(std::vector<PtraceModule::LibMeta>& list)
+    {
+        int i =  0;
+        for(const auto& x : list)
+        {
+            std::cout << "Element " << i << " | name : " << x.m_string_lib_name << " | path : " << x.m_string_lib_path << " | " << "\n";
+            i++;
+        }
+        return;
+    }
 }
 
 
@@ -42,7 +54,7 @@ std::optional<PtraceModule::Object> PtraceModule::Object::instantiate(const std:
         std::getline(ifstream_entry_comm, string_proc_name);
         if(string_proc_name == target_process_name)
         {
-            DataStructure temporary
+            TargetMetadata temporary
                 {
                     .m_string_target_name = string_proc_name,
                     .m_string_target_pid = entry.path().filename().string()
@@ -80,14 +92,45 @@ std::optional<PtraceModule::Object> PtraceModule::Object::instantiate(const std:
     return std::nullopt;
 }
 
-bool load_library(PtraceModule::LibMeta lib_meta)
+bool PtraceModule::Object::queue_loadable()
 {
-    //wip
-    return false;
+    std::string loadable_string_path = get_input<std::string>("Enter library path : ");
+
+    //////////////////////////////////////////
+    /////////VALIDATE/////LIBRARY/////////////
+    //////////////////////////////////////////
+
+    std::filesystem::path loadable_fs_path = loadable_string_path;
+    if(!std::filesystem::exists(loadable_fs_path))
+    {
+        return false;
+    }
+    if(!(std::filesystem::is_regular_file(loadable_fs_path)))
+    {
+        return false;
+    }
+    if(loadable_fs_path.extension() != ".so")
+    {
+        return false;
+    }
+
+    std::string loadable_string_name = get_input<std::string>("Enter library name : ");
+
+    m_loadable_list.push_back
+    (
+        {
+            .m_string_lib_name =  loadable_string_name,
+            .m_string_lib_path = loadable_string_path
+        }
+    );
+
+    DEBUG_PRINT_LOADABLE_LIST(m_loadable_list);
+
+    return true;
 }
 
 
-const PtraceModule::DataStructure& PtraceModule::Object::peek_data() const
+const PtraceModule::TargetMetadata& PtraceModule::Object::peek_data() const
 {
-    return m_data_structure;
+    return m_target_metadata;
 }

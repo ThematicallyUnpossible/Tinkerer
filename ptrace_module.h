@@ -3,10 +3,11 @@
 
 #include <string>
 #include <optional>
+#include <vector>
 
 namespace PtraceModule
 {
-    struct DataStructure
+    struct TargetMetadata
     {
         std::string m_string_target_name{};
         std::string m_string_target_pid{};
@@ -35,10 +36,11 @@ namespace PtraceModule
     {
         private:
             State m_state{State::NotReady};
-            DataStructure m_data_structure{};
+            TargetMetadata m_target_metadata{};
+            std::vector<LibMeta> m_loadable_list{};
 
-            explicit Object(DataStructure&& data_structure) : 
-                m_data_structure{std::move(data_structure)}
+            explicit Object(TargetMetadata&& data_structure) : 
+                m_target_metadata{std::move(data_structure)}
             {
                 //empty body
             }
@@ -48,8 +50,8 @@ namespace PtraceModule
             Object() = delete;
 
             static std::optional<Object> instantiate(const std::string& target_process_name);
-            bool load_library(LibMeta lib_meta);
-            const DataStructure& peek_data() const;
+            bool queue_loadable();
+            const TargetMetadata& peek_data() const;
 
 
     };
