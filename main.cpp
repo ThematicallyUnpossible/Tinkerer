@@ -24,7 +24,9 @@ int main(int argc, char* argv[]){
         std::cout << "Failed to queue library." << "\n";
     }
 
+    bool inject_result = PtraceModuleObject->inject_loadable();
 
+    
 
     return 0;  
 }

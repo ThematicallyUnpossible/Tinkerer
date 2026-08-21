@@ -5,7 +5,8 @@
 #include <filesystem>
 #include <string>
 #include <optional>
-
+#include <sys/ptrace.h>
+#include <sys/user.h>
 
 namespace 
 {
@@ -28,10 +29,15 @@ namespace
 
     void DEBUG_PRINT_LOADABLE_LIST(std::vector<PtraceModule::LibMeta>& list)
     {
+        if(list.empty())
+        {
+            std::cerr << "(DEBUG) EMPTY QUEUE LIST" << "\n";
+            return;
+        }
         int i =  0;
         for(const auto& x : list)
         {
-            std::cout << "Element " << i << " | name : " << x.m_string_lib_name << " | path : " << x.m_string_lib_path << " | " << "\n";
+            std::cout << "Queued " << i << " | name : " << x.m_string_lib_name << " | path : " << x.m_string_lib_path << " | " << "\n";
             i++;
         }
         return;
@@ -124,11 +130,46 @@ bool PtraceModule::Object::queue_loadable()
         }
     );
 
-    DEBUG_PRINT_LOADABLE_LIST(m_loadable_list);
-
     return true;
 }
 
+bool PtraceModule::Object::inject_loadable()
+{
+    DEBUG_PRINT_LOADABLE_LIST(m_loadable_list);
+    if(m_loadable_list.empty())
+    {
+        return false;
+    }
+
+    unsigned lib_index{get_input<unsigned>("Choose queued library's index to be load : ", 0, (m_loadable_list.size()-1) )};
+
+    LibMeta stolen_loadable{std::move(m_loadable_list[lib_index])};
+    m_loadable_list.erase(m_loadable_list.begin()+lib_index); //this can be written when the lib is succesfully written
+    DEBUG_PRINT_LOADABLE_LIST(m_loadable_list);
+
+    //////////////////////////////////////////
+    /////////////LOAD/////LIBRARY/////////////
+    //////////////////////////////////////////
+
+    unsigned long long ull_target_pid = std::stoull(m_target_metadata.m_string_target_pid, nullptr,  16);
+    if(ptrace(PTRACE_ATTACH, ull_target_pid, nullptr, nullptr) == -1)
+    {
+        std::cerr << "ATTACH FAILED";
+        return false;
+    }
+
+
+    user_regs_struct save, current;
+    if(ptrace(PTRACE_GETREGS, ull_target_pid, &current, nullptr) == -1)
+    {
+        std::cerr << "FAILED TO GETREG";
+        return false;
+    }    
+
+
+
+    return false;
+}
 
 const PtraceModule::TargetMetadata& PtraceModule::Object::peek_data() const
 {

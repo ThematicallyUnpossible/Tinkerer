@@ -51,6 +51,7 @@ namespace PtraceModule
 
             static std::optional<Object> instantiate(const std::string& target_process_name);
             bool queue_loadable();
+            bool inject_loadable();
             const TargetMetadata& peek_data() const;
 
 
