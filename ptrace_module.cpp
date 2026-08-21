@@ -162,11 +162,31 @@ bool PtraceModule::Object::inject_loadable()
     user_regs_struct save, current;
     if(ptrace(PTRACE_GETREGS, ull_target_pid, &current, nullptr) == -1)
     {
-        std::cerr << "FAILED TO GETREG";
+        std::cerr << "FAILED TO GETREGS";
         return false;
     }    
 
+    //save starting checkpoint
+    save = current;
 
+    constexpr unsigned long long SYSCALL_MMAP         {0xCC050F};
+    constexpr unsigned long long MMAP_SYSCALL_NUMBER  {0x9};
+    constexpr unsigned long long MMAP_ADDRESS         {0};
+    constexpr unsigned long long MMAP_BYTES_SIZE      {0x1000};
+    constexpr unsigned long long MMAP_FLAG_RWX        {0x7};
+    constexpr unsigned long long MMAP_FLAG_PROTENIMOUS{0x22};
+    constexpr unsigned long long MMAP_FLAG_FD         {0xFFFFFFFFFFFFFFFF};
+    constexpr unsigned long long MMAP_ALLOCATE_OFFSET {0};
+
+    current.rax = MMAP_SYSCALL_NUMBER;
+    current.rdi = MMAP_ADDRESS;
+    current.rsi = MMAP_BYTES_SIZE;
+    current.rdx = MMAP_FLAG_RWX;
+    current.r10 = MMAP_FLAG_PROTENIMOUS;
+    current.r8  = MMAP_FLAG_FD;
+    current.r9  = MMAP_ALLOCATE_OFFSET;
+
+    
 
     return false;
 }
