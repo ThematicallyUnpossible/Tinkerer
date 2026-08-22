@@ -7,6 +7,7 @@
 #include <optional>
 #include <sys/ptrace.h>
 #include <sys/user.h>
+#include <sys/wait.h>
 
 namespace 
 {
@@ -151,16 +152,19 @@ bool PtraceModule::Object::inject_loadable()
     /////////////LOAD/////LIBRARY/////////////
     //////////////////////////////////////////
 
-    unsigned long long ull_target_pid = std::stoull(m_target_metadata.m_string_target_pid, nullptr,  16);
+    
+    unsigned long long ull_target_pid = std::stoull(m_target_metadata.m_string_target_pid, nullptr,  10);
+
     if(ptrace(PTRACE_ATTACH, ull_target_pid, nullptr, nullptr) == -1)
     {
         std::cerr << "ATTACH FAILED";
         return false;
     }
-
+    waitpid(ull_target_pid, nullptr, 0);
+    
 
     user_regs_struct save, current;
-    if(ptrace(PTRACE_GETREGS, ull_target_pid, &current, nullptr) == -1)
+    if(ptrace(PTRACE_GETREGS, (pid_t)ull_target_pid, nullptr, &current) == -1)
     {
         std::cerr << "FAILED TO GETREGS";
         return false;
@@ -186,8 +190,15 @@ bool PtraceModule::Object::inject_loadable()
     current.r8  = MMAP_FLAG_FD;
     current.r9  = MMAP_ALLOCATE_OFFSET;
 
-    
+    unsigned long long current_rip_address = current.rip;
+    unsigned long long current_rip_instruction{};
+    if((current_rip_instruction = ptrace(PTRACE_PEEKDATA, ull_target_pid, reinterpret_cast<void*>(current_rip_address), nullptr)) == -1)
+    {
+        std::cerr << "FAILED TO PEEK RIP" << "\n";
+        return false;
+    }
 
+    std::cout << std::hex << current_rip_instruction << std::dec << "\n";
     return false;
 }
 
