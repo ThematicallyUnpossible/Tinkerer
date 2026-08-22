@@ -173,7 +173,6 @@ bool PtraceModule::Object::inject_loadable()
     //save starting checkpoint
     save = current;
 
-    constexpr unsigned long long SYSCALL_MMAP         {0xCC050F};
     constexpr unsigned long long MMAP_SYSCALL_NUMBER  {0x9};
     constexpr unsigned long long MMAP_ADDRESS         {0};
     constexpr unsigned long long MMAP_BYTES_SIZE      {0x1000};
@@ -199,6 +198,14 @@ bool PtraceModule::Object::inject_loadable()
     }
 
     std::cout << std::hex << current_rip_instruction << std::dec << "\n";
+
+    constexpr unsigned long long SYSCALL_OPCODE       {0xCC050F};
+    current_rip_instruction = (current_rip_instruction & 0xFFFFFFFFFF000000) | SYSCALL_OPCODE;
+
+    std::cout << std::hex << current_rip_instruction << std::dec << "\n";
+
+
+    
     return false;
 }
 
