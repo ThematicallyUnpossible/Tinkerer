@@ -197,12 +197,31 @@ bool PtraceModule::Object::inject_loadable()
         return false;
     }
 
-    std::cout << std::hex << current_rip_instruction << std::dec << "\n";
-
+    
     constexpr unsigned long long SYSCALL_OPCODE       {0xCC050F};
     current_rip_instruction = (current_rip_instruction & 0xFFFFFFFFFF000000) | SYSCALL_OPCODE;
 
-    std::cout << std::hex << current_rip_instruction << std::dec << "\n";
+    if(ptrace(PTRACE_SETREGS, ull_target_pid, nullptr, &current) == -1)
+    {
+        std::cerr << "SETREGS FAILED" << "\n";
+        return false;
+    }
+
+    if(ptrace(PTRACE_POKEDATA,ull_target_pid,reinterpret_cast<void*>(current_rip_address),reinterpret_cast<void*>(current_rip_instruction))==-1)
+    {
+        std::cerr << "FAILED TO MODIFY RIP" << "\n";
+        return false;
+    }
+
+    ptrace(PTRACE_CONT, ull_target_pid, nullptr, nullptr);
+
+    waitpid(ull_target_pid, nullptr, 0);
+
+    std::cerr << "CHECKED\n";
+
+    
+
+
 
 
     
