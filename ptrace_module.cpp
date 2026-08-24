@@ -163,7 +163,7 @@ bool PtraceModule::Object::inject_loadable()
     waitpid(ull_target_pid, nullptr, 0);
     
 
-    user_regs_struct save, current;
+    user_regs_struct save, current, result;
     if(ptrace(PTRACE_GETREGS, (pid_t)ull_target_pid, nullptr, &current) == -1)
     {
         std::cerr << "FAILED TO GETREGS";
@@ -178,7 +178,7 @@ bool PtraceModule::Object::inject_loadable()
     constexpr unsigned long long MMAP_BYTES_SIZE      {0x1000};
     constexpr unsigned long long MMAP_FLAG_RWX        {0x7};
     constexpr unsigned long long MMAP_FLAG_PROTENIMOUS{0x22};
-    constexpr unsigned long long MMAP_FLAG_FD         {0xFFFFFFFFFFFFFFFF};
+    constexpr unsigned long long MMAP_FLAG_FD         {static_cast<unsigned long long>(-1)};
     constexpr unsigned long long MMAP_ALLOCATE_OFFSET {0};
 
     current.rax = MMAP_SYSCALL_NUMBER;
@@ -199,7 +199,13 @@ bool PtraceModule::Object::inject_loadable()
 
     
     constexpr unsigned long long SYSCALL_OPCODE       {0xCC050F};
-    current_rip_instruction = (current_rip_instruction & 0xFFFFFFFFFF000000) | SYSCALL_OPCODE;
+    unsigned long long altered_instruction = (current_rip_instruction & 0xFFFFFFFFFF000000) | SYSCALL_OPCODE;
+
+    if(ptrace(PTRACE_POKEDATA,ull_target_pid,reinterpret_cast<void*>(current_rip_address),reinterpret_cast<void*>(altered_instruction))==-1)
+    {
+        std::cerr << "FAILED TO MODIFY RIP" << "\n";
+        return false;
+    }
 
     if(ptrace(PTRACE_SETREGS, ull_target_pid, nullptr, &current) == -1)
     {
@@ -207,24 +213,43 @@ bool PtraceModule::Object::inject_loadable()
         return false;
     }
 
+    if(ptrace(PTRACE_CONT, ull_target_pid, nullptr, nullptr) == -1)
+    {
+        std::cerr << "UNABLE TO LET TARGET CONTINUE";
+    }
+
+    waitpid(ull_target_pid, nullptr, 0);
+
+    if(ptrace(PTRACE_GETREGS, ull_target_pid, nullptr, &result) == -1)
+    {
+        std::cerr << "FAILED TO GETREGS" << "\n";
+        return false;
+    }
+
+    std::cout << std::hex << result.rax << std::dec << "\n";
+
+    //////////////////////////////////////////
+    //////////////////CLEANING////////////////
+    //////////////////////////////////////////
+
     if(ptrace(PTRACE_POKEDATA,ull_target_pid,reinterpret_cast<void*>(current_rip_address),reinterpret_cast<void*>(current_rip_instruction))==-1)
     {
         std::cerr << "FAILED TO MODIFY RIP" << "\n";
         return false;
     }
 
-    ptrace(PTRACE_CONT, ull_target_pid, nullptr, nullptr);
+    if(ptrace(PTRACE_SETREGS, ull_target_pid, nullptr, &save) == -1)
+    {
+        std::cerr << "SETREGS FAILED" << "\n";
+        return false;
+    }
 
-    waitpid(ull_target_pid, nullptr, 0);
+    if(ptrace(PTRACE_CONT, ull_target_pid, nullptr, nullptr) == -1)
+    {
+        std::cerr << "UNABLE TO LET TARGET CONTINUE";
+        return false;
+    }
 
-    std::cerr << "CHECKED\n";
-
-    
-
-
-
-
-    
     return false;
 }
 
