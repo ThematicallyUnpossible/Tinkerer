@@ -8,6 +8,7 @@
 #include <sys/ptrace.h>
 #include <sys/user.h>
 #include <sys/wait.h>
+#include <sys/uio.h>
 
 namespace 
 {
@@ -149,7 +150,7 @@ bool PtraceModule::Object::inject_loadable()
     DEBUG_PRINT_LOADABLE_LIST(m_loadable_list);
 
     //////////////////////////////////////////
-    /////////////LOAD/////LIBRARY/////////////
+    /////////////RESERVE/MEM/SPACE////////////
     //////////////////////////////////////////
 
     
@@ -198,7 +199,7 @@ bool PtraceModule::Object::inject_loadable()
     }
 
     
-    constexpr unsigned long long SYSCALL_OPCODE       {0xCC050F};
+    constexpr unsigned long long SYSCALL_OPCODE{0xCC050F};
     unsigned long long altered_instruction = (current_rip_instruction & 0xFFFFFFFFFF000000) | SYSCALL_OPCODE;
 
     if(ptrace(PTRACE_POKEDATA,ull_target_pid,reinterpret_cast<void*>(current_rip_address),reinterpret_cast<void*>(altered_instruction))==-1)
@@ -226,7 +227,33 @@ bool PtraceModule::Object::inject_loadable()
         return false;
     }
 
-    std::cout << std::hex << result.rax << std::dec << "\n";
+    const unsigned long long mmap_result{result.rax};
+    std::cout << "Stage 1, MMAP allocates at : 0x" <<std::hex << mmap_result << std::dec << "\n";
+
+    //////////////////////////////////////////
+    /////////////WRITE//STRING////////////////
+    //////////////////////////////////////////
+
+    iovec local_write_region
+    {
+        .iov_base = stolen_loadable.m_string_lib_path.data(),
+        .iov_len = stolen_loadable.m_string_lib_path.size()
+    };
+
+    iovec remote_write_region
+    {
+        .iov_base = reinterpret_cast<void*>(mmap_result),
+        .iov_len = stolen_loadable.m_string_lib_path.size()
+    };
+
+    ssize_t written_bytes = process_vm_writev(ull_target_pid, &local_write_region, 1, &remote_write_region, 1, 0);
+    std::cerr << "Stage 1, written string bytes : "  << written_bytes << "\n";
+    if(written_bytes != stolen_loadable.m_string_lib_path.size())
+    {
+        std::cerr << "FAILED TO PROPERLY WRITE STRING" << "\n";
+        return false;
+    }
+
 
     //////////////////////////////////////////
     //////////////////CLEANING////////////////
@@ -249,6 +276,9 @@ bool PtraceModule::Object::inject_loadable()
         std::cerr << "UNABLE TO LET TARGET CONTINUE";
         return false;
     }
+
+    
+
 
     return false;
 }
