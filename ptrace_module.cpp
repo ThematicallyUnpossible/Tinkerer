@@ -117,8 +117,6 @@ std::optional<PtraceModule::Object> PtraceModule::Object::instantiate(const std:
 
             std::cout << std::hex <<  temporary.m_target_dlopen_addr << std::dec << "\n";
 
-            return std::nullopt;
-            
             return Object(std::move(temporary));
         }
     }
