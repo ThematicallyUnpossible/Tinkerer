@@ -14,6 +14,8 @@ namespace PtraceModule
 
         std::string m_string_target_base{};
         std::string m_string_target_libc_base{};
+        
+        unsigned long long m_target_dlopen_addr{};
     };
 
     struct LibMeta

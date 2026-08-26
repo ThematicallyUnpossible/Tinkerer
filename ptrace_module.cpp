@@ -9,6 +9,7 @@
 #include <sys/user.h>
 #include <sys/wait.h>
 #include <sys/uio.h>
+#include <dlfcn.h>
 
 namespace 
 {
@@ -94,6 +95,30 @@ std::optional<PtraceModule::Object> PtraceModule::Object::instantiate(const std:
                 return std::nullopt;
             }
 
+
+            int self_pid = getpid();
+            std::string string_self_pid = std::to_string(self_pid);
+            std::optional<std::string> string_self_libc_base =  string_find_base(string_self_pid, "libc");
+            if(!string_self_libc_base)
+            {
+                return std::nullopt;
+            }
+            
+            void* dlopen = dlsym(RTLD_DEFAULT, "dlopen");
+            if(!dlopen)
+            {
+                return std::nullopt;
+            }
+
+            unsigned long long self_dlopen_addr = reinterpret_cast<unsigned long long>(dlopen);
+            unsigned long long self_libc_base = std::stoull(string_self_libc_base.value(), nullptr, 16);
+            unsigned long long universal_dlopen_offset = self_dlopen_addr - self_libc_base;
+            temporary.m_target_dlopen_addr = ((std::stoull(temporary.m_string_target_libc_base, nullptr, 16)) + universal_dlopen_offset );
+
+            std::cout << std::hex <<  temporary.m_target_dlopen_addr << std::dec << "\n";
+
+            return std::nullopt;
+            
             return Object(std::move(temporary));
         }
     }
