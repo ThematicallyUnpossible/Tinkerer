@@ -221,6 +221,8 @@ bool PtraceModule::Object::inject_loadable()
         return false;
     }
 
+    const unsigned long long first_rip_instruction =  current_rip_instruction;
+
     
     constexpr unsigned long long SYSCALL_OPCODE{0xCC050F};
     unsigned long long altered_instruction = (current_rip_instruction & 0xFFFFFFFFFF000000) | SYSCALL_OPCODE;
@@ -277,12 +279,60 @@ bool PtraceModule::Object::inject_loadable()
         return false;
     }
 
+    //////////////////////////////////////////
+    //////////////////DLOPEN//////////////////
+    //////////////////////////////////////////
+
+    constexpr unsigned long long DLOPEN_RTLD_NOW { 0x2 };
+
+    current.rax = m_target_metadata.m_target_dlopen_addr;
+    current.rdi = mmap_result;
+    current.rsi = DLOPEN_RTLD_NOW;
+    current.rsp = (current.rsp & 0xFFFFFFFFFFFFFFF0);
+
+    current_rip_address = current.rip;
+    current_rip_instruction = {};
+    if( ptrace(PTRACE_PEEKDATA, ull_target_pid, reinterpret_cast<void*>(current_rip_address), nullptr) == -1 )
+    {
+        std::cerr << "FAILED TO PEEK RIP" << "\n";
+        return false;
+    }
+
+    constexpr unsigned long long CALL_RAX_OPCODE {0xCCD0FF};
+
+    altered_instruction = (current_rip_instruction & 0xFFFFFFFFFF000000) | CALL_RAX_OPCODE;
+
+    if(ptrace(PTRACE_POKEDATA,ull_target_pid,reinterpret_cast<void*>(current_rip_address),reinterpret_cast<void*>(altered_instruction))==-1)
+    {
+        std::cerr << "FAILED TO MODIFY RIP" << "\n";
+        return false;
+    }
+
+    if(ptrace(PTRACE_SETREGS, ull_target_pid, nullptr, &current) == -1)
+    {
+        std::cerr << "SETREGS FAILED" << "\n";
+        return false;
+    }
+
+    if(ptrace(PTRACE_CONT, ull_target_pid, nullptr, nullptr) == -1)
+    {
+        std::cerr << "UNABLE TO LET TARGET CONTINUE";
+    }
+
+    waitpid(ull_target_pid, nullptr, 0);
+
+    std::optional<std::string> is_loaded = string_find_base(m_target_metadata.m_string_target_pid, stolen_loadable.m_string_lib_name);
+    if(is_loaded)
+    {
+        std::cout << "LOADED!" << "\n";
+    }
+    
 
     //////////////////////////////////////////
     //////////////////CLEANING////////////////
     //////////////////////////////////////////
 
-    if(ptrace(PTRACE_POKEDATA,ull_target_pid,reinterpret_cast<void*>(current_rip_address),reinterpret_cast<void*>(current_rip_instruction))==-1)
+    if(ptrace(PTRACE_POKEDATA,ull_target_pid,reinterpret_cast<void*>(current_rip_address),reinterpret_cast<void*>(first_rip_instruction))==-1)
     {
         std::cerr << "FAILED TO MODIFY RIP" << "\n";
         return false;
