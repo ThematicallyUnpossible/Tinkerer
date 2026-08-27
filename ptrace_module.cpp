@@ -253,7 +253,6 @@ bool PtraceModule::Object::inject_loadable()
     }
 
     const unsigned long long mmap_result{result.rax};
-    std::cout << "Stage 1, MMAP allocates at : 0x" <<std::hex << mmap_result << std::dec << "\n";
 
     //////////////////////////////////////////
     /////////////WRITE//STRING////////////////
@@ -272,7 +271,7 @@ bool PtraceModule::Object::inject_loadable()
     };
 
     ssize_t written_bytes = process_vm_writev(ull_target_pid, &local_write_region, 1, &remote_write_region, 1, 0);
-    std::cerr << "Stage 1, written string bytes : "  << written_bytes << "\n";
+
     if(written_bytes != stolen_loadable.m_string_lib_path.size())
     {
         std::cerr << "FAILED TO PROPERLY WRITE STRING" << "\n";
@@ -325,6 +324,10 @@ bool PtraceModule::Object::inject_loadable()
     if(is_loaded)
     {
         std::cout << "LOADED!" << "\n";
+    }
+    else
+    {
+        std::cout << "FAILED TO LOAD!" << "\n";
     }
     
 
