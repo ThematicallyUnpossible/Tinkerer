@@ -1,5 +1,4 @@
 #include <iostream>
-#include "io_helper.h"
 #include "ptrace_module.h"
 
 void run_injector(char* argv)
@@ -31,6 +30,8 @@ int main(int argc, char* argv[]){
         return 1;
     }
 
+
+    std::cout << "test modification" << "\n";
     run_injector(argv[1]);
     
     
