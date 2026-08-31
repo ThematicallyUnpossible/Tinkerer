@@ -1,5 +1,6 @@
 #include <iostream>
 #include "ptrace_module.h"
+#include "trigger_module.h"
 
 void run_injector(char* argv)
 {
@@ -19,6 +20,7 @@ void run_injector(char* argv)
     }
 
     bool inject_result = PtraceModuleObject->inject_loadable();
+    trigger_hook_fcn(PtraceModuleObject->peek_data().m_string_target_pid);
 
 }
 
