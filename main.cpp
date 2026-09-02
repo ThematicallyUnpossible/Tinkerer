@@ -32,8 +32,6 @@ int main(int argc, char* argv[]){
         return 1;
     }
 
-
-    std::cout << "test modification" << "\n";
     run_injector(argv[1]);
     
     
