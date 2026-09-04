@@ -1,4 +1,5 @@
 #include <iostream>
+#include "io_helper.h"
 #include "ptrace_module.h"
 #include "trigger_module.h"
 
@@ -32,7 +33,16 @@ int main(int argc, char* argv[]){
         return 1;
     }
 
-    run_injector(argv[1]);
+    std::string table_of_choices {
+    "1. Inject & hook\n"
+    "Enter your choice : "
+    };
+    int choice = get_input<int>(table_of_choices, 1, 1);
+    clear_input();
+    if(choice == 1)
+    {
+        run_injector(argv[1]);
+    }
     
     
 
