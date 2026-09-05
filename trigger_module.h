@@ -19,7 +19,7 @@ inline void trigger_hook_fcn(const std::string& target_pid)
         std::cerr << "UNABLE TO FIND LIB BASE" << "\n";
         return;
     }
-
+ 
     std::optional<std::string> target_base =  string_find_base(target_pid, "DebugMe");
     if(!target_base)
     {
@@ -40,10 +40,13 @@ inline void trigger_hook_fcn(const std::string& target_pid)
     };
 
     unsigned long long ull_lib_base = std::stoull(lib_base.value(), nullptr, 16);
-    unsigned long long ull_hook_addr = ull_lib_base + 0x1119;
+
+    std::string string_hook_fcn_offset = get_input<std::string>("Enter hook function offset : "); //0x1119
+    const unsigned long long ull_hook_fcn_offset = std::stoull(string_hook_fcn_offset, nullptr, 16);
+    unsigned long long ull_hook_addr = ull_lib_base + ull_hook_fcn_offset;
+
     memcpy(&bytes_array[6], &ull_hook_addr, 8);
 
-    std::cout << "TARGET PID : " << target_pid << "\n";
     std::string target_mem_path = "/proc/"+target_pid+"/mem";
     int target_fd = open(target_mem_path.c_str(), O_RDWR);
     if(target_fd != -1)
@@ -55,7 +58,12 @@ inline void trigger_hook_fcn(const std::string& target_pid)
         std::cerr << "UNABLE TO GET HANDLE : " << std::strerror(errno) << "\n";
         return;
     }
-    lseek(target_fd, (ull_self_base+0x2377),SEEK_SET);    
+
+    std::string string_original_fcn_offset = get_input<std::string>("Enter original function offset : "); //0x2377
+    const unsigned long long ull_original_fcn_offset = std::stoull(string_original_fcn_offset, nullptr, 16);
+
+
+    lseek(target_fd, (ull_self_base+ull_original_fcn_offset),SEEK_SET);    
     write(target_fd, bytes_array, 14);
 
     return;
