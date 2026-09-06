@@ -13,6 +13,13 @@ inline void trigger_hook_fcn(const std::string& target_pid)
 {
     clear_input();
     std::string lib_name = get_input<std::string>("Enter lib name : ");
+
+    if (lib_name.empty()) 
+    {
+        std::cerr << "LIBNAME CANNOT BE EMPTY\n";
+        return;
+    }
+
     std::optional<std::string> lib_base = string_find_base(target_pid, lib_name);
     if(!lib_base)
     {
