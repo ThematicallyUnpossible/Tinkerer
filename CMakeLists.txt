@@ -7,5 +7,6 @@ ptrace_module.h
 ptrace_module.cpp
 trigger_module.h
 utility.h
+parser_module.h
 )
 
