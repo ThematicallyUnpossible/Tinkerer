@@ -41,6 +41,8 @@ inline void parse_elf64()
         munmap(map, st.st_size);
         return;
     }
+
+    std::cout << "VALID ELF FILE!" << "\n";
 }
 
 

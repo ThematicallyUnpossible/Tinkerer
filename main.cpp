@@ -2,6 +2,8 @@
 #include "io_helper.h"
 #include "ptrace_module.h"
 #include "trigger_module.h"
+#include "parser_module.h"
+
 
 void run_injector(char* argv)
 {
@@ -66,13 +68,18 @@ int main(int argc, char* argv[]){
 
     std::string table_of_choices {
     "1. Inject & hook\n"
+    "2. Parse Elf \n"
     "Enter your choice : "
     };
-    int choice = get_input<int>(table_of_choices, 1, 1);
+    int choice = get_input<int>(table_of_choices, 1, 2);
     clear_input();
     if(choice == 1)
     {
         run_injector(argv[1]);
+    }
+    else if (choice == 2)
+    {
+        parse_elf64();
     }
     
     
