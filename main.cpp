@@ -71,18 +71,19 @@ int main(int argc, char* argv[]){
     "2. Parse Elf \n"
     "Enter your choice : "
     };
-    int choice = get_input<int>(table_of_choices, 1, 2);
-    clear_input();
-    if(choice == 1)
+    while(true)
     {
-        run_injector(argv[1]);
+        int choice = get_input<int>(table_of_choices, 1, 2);
+        clear_input();
+        if(choice == 1)
+        {
+            run_injector(argv[1]);
+        }
+        else if (choice == 2)
+        {
+            parse_elf64();
+        }
     }
-    else if (choice == 2)
-    {
-        parse_elf64();
-    }
-    
-    
 
     return 0;  
 }
