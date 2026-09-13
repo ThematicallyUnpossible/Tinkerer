@@ -48,6 +48,20 @@ inline void parse_elf64()
 
     std::cout << "VALID ELF64!" << "\n";
 
+    auto* section_header = reinterpret_cast<Elf64_Shdr*>(static_cast<char*>(map) + header->e_shoff);
+
+    const auto& shstrtab_hdr = section_header[header->e_shstrndx];
+
+    const char* shstrtab = static_cast<const char*>(map) + shstrtab_hdr.sh_offset;
+
+    std::cout << "--- ELF Sections ---\n";
+    for (int i = 0; i < header->e_shnum; ++i) 
+    {
+        const char* name = &shstrtab[section_header[i].sh_name];
+        std::cout << "Name: " << name
+                  << " | Type: " << section_header[i].sh_type 
+                  << " | Size: " << section_header[i].sh_size << "\n";
+    }
 
 
 
