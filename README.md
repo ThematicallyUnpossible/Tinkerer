@@ -1,2 +1,12 @@
 # Tinkerer
-    basic app debugger? and it has a functionality to load a .so and a function hook.
+C++ Injector for x86-64 Linux. Utilizes Ptrace and requires sudo.
+
+
+
+
+## Features
+
+- .so Loader
+- Elf64 Parser
+- Function Hooker
+
