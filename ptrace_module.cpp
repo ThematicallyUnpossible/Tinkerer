@@ -126,8 +126,11 @@ bool PtraceModule::Object::inject_loadable()
     DEBUG_PRINT_LOADABLE_LIST(m_loadable_list);
     if(m_loadable_list.empty())
     {
+        m_state = PtraceModule::State::Detached;
         return false;
     }
+
+
 
     unsigned lib_index{get_input<unsigned>("Choose queued library's index to be load : ", 0, (m_loadable_list.size()-1) )};
 
@@ -145,17 +148,23 @@ bool PtraceModule::Object::inject_loadable()
     if(ptrace(PTRACE_ATTACH, ull_target_pid, nullptr, nullptr) == -1)
     {
         std::cerr << "ATTACH FAILED";
+        m_state = PtraceModule::State::Detached;
         return false;
     }
     waitpid(ull_target_pid, nullptr, 0);
-    
+    m_state = PtraceModule::State::Attached;
 
     user_regs_struct save, current, result;
     if(ptrace(PTRACE_GETREGS, (pid_t)ull_target_pid, nullptr, &current) == -1)
     {
         std::cerr << "FAILED TO GETREGS";
+        m_state = PtraceModule::State::Exited;
         return false;
     }    
+
+    m_state = PtraceModule::State::Running;
+
+
 
     //save starting checkpoint
     save = current;
@@ -181,6 +190,7 @@ bool PtraceModule::Object::inject_loadable()
     if((current_rip_instruction = ptrace(PTRACE_PEEKDATA, ull_target_pid, reinterpret_cast<void*>(current_rip_address), nullptr)) == -1)
     {
         std::cerr << "FAILED TO PEEK RIP" << "\n";
+        m_state = PtraceModule::State::Exited;
         return false;
     }
 
@@ -193,18 +203,22 @@ bool PtraceModule::Object::inject_loadable()
     if(ptrace(PTRACE_POKEDATA,ull_target_pid,reinterpret_cast<void*>(current_rip_address),reinterpret_cast<void*>(altered_instruction))==-1)
     {
         std::cerr << "FAILED TO MODIFY RIP" << "\n";
+        m_state = PtraceModule::State::Exited;
         return false;
     }
 
     if(ptrace(PTRACE_SETREGS, ull_target_pid, nullptr, &current) == -1)
     {
         std::cerr << "SETREGS FAILED" << "\n";
+        m_state = PtraceModule::State::Exited;
         return false;
     }
 
     if(ptrace(PTRACE_CONT, ull_target_pid, nullptr, nullptr) == -1)
     {
         std::cerr << "UNABLE TO LET TARGET CONTINUE";
+        m_state = PtraceModule::State::Stopped;
+        return false;
     }
 
     waitpid(ull_target_pid, nullptr, 0);
@@ -212,6 +226,7 @@ bool PtraceModule::Object::inject_loadable()
     if(ptrace(PTRACE_GETREGS, ull_target_pid, nullptr, &result) == -1)
     {
         std::cerr << "FAILED TO GETREGS" << "\n";
+        m_state = PtraceModule::State::Exited;
         return false;
     }
 
@@ -238,6 +253,7 @@ bool PtraceModule::Object::inject_loadable()
     if(written_bytes != stolen_loadable.m_string_lib_path.size())
     {
         std::cerr << "FAILED TO PROPERLY WRITE STRING" << "\n";
+        m_state = PtraceModule::State::Exited;
         return false;
     }
 
@@ -257,6 +273,7 @@ bool PtraceModule::Object::inject_loadable()
     if( ptrace(PTRACE_PEEKDATA, ull_target_pid, reinterpret_cast<void*>(current_rip_address), nullptr) == -1 )
     {
         std::cerr << "FAILED TO PEEK RIP" << "\n";
+        m_state = PtraceModule::State::Exited;
         return false;
     }
 
@@ -267,18 +284,25 @@ bool PtraceModule::Object::inject_loadable()
     if(ptrace(PTRACE_POKEDATA,ull_target_pid,reinterpret_cast<void*>(current_rip_address),reinterpret_cast<void*>(altered_instruction))==-1)
     {
         std::cerr << "FAILED TO MODIFY RIP" << "\n";
+        m_state = PtraceModule::State::Exited;
+
         return false;
     }
 
     if(ptrace(PTRACE_SETREGS, ull_target_pid, nullptr, &current) == -1)
     {
         std::cerr << "SETREGS FAILED" << "\n";
+        m_state = PtraceModule::State::Exited;
+
         return false;
     }
 
     if(ptrace(PTRACE_CONT, ull_target_pid, nullptr, nullptr) == -1)
     {
         std::cerr << "UNABLE TO LET TARGET CONTINUE";
+        m_state = PtraceModule::State::Stopped;
+
+        return false;
     }
 
     waitpid(ull_target_pid, nullptr, 0);
@@ -301,23 +325,23 @@ bool PtraceModule::Object::inject_loadable()
     if(ptrace(PTRACE_POKEDATA,ull_target_pid,reinterpret_cast<void*>(current_rip_address),reinterpret_cast<void*>(first_rip_instruction))==-1)
     {
         std::cerr << "FAILED TO MODIFY RIP" << "\n";
+        m_state = PtraceModule::State::Exited;
         return false;
     }
 
     if(ptrace(PTRACE_SETREGS, ull_target_pid, nullptr, &save) == -1)
     {
         std::cerr << "SETREGS FAILED" << "\n";
+        m_state = PtraceModule::State::Exited;
         return false;
     }
 
     if(ptrace(PTRACE_CONT, ull_target_pid, nullptr, nullptr) == -1)
     {
         std::cerr << "UNABLE TO LET TARGET CONTINUE";
+        m_state = PtraceModule::State::Exited;
         return false;
     }
-
-    
-
 
     return false;
 }
