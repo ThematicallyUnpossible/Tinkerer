@@ -318,30 +318,51 @@ bool PtraceModule::Object::inject_loadable()
     }
     
 
+    auto cleanup = [&](){
+        if(ptrace(PTRACE_POKEDATA,ull_target_pid,reinterpret_cast<void*>(current_rip_address),reinterpret_cast<void*>(first_rip_instruction))==-1)
+        {
+            std::cerr << "FAILED TO MODIFY RIP" << "\n";
+        }
+
+        if(ptrace(PTRACE_SETREGS, ull_target_pid, nullptr, &save) == -1)
+        {
+            std::cerr << "SETREGS FAILED" << "\n";
+            m_state = PtraceModule::State::Exited;
+        }
+
+        if(ptrace(PTRACE_CONT, ull_target_pid, nullptr, nullptr) == -1)
+        {
+            std::cerr << "UNABLE TO LET TARGET CONTINUE";
+            m_state = PtraceModule::State::Exited;
+        }
+    };
+
+
     //////////////////////////////////////////
     //////////////////CLEANING////////////////
     //////////////////////////////////////////
 
-    if(ptrace(PTRACE_POKEDATA,ull_target_pid,reinterpret_cast<void*>(current_rip_address),reinterpret_cast<void*>(first_rip_instruction))==-1)
-    {
-        std::cerr << "FAILED TO MODIFY RIP" << "\n";
-        m_state = PtraceModule::State::Exited;
-        return false;
-    }
+    cleanup();
+    // if(ptrace(PTRACE_POKEDATA,ull_target_pid,reinterpret_cast<void*>(current_rip_address),reinterpret_cast<void*>(first_rip_instruction))==-1)
+    // {
+    //     std::cerr << "FAILED TO MODIFY RIP" << "\n";
+    //     m_state = PtraceModule::State::Exited;
+    //     return false;
+    // }
 
-    if(ptrace(PTRACE_SETREGS, ull_target_pid, nullptr, &save) == -1)
-    {
-        std::cerr << "SETREGS FAILED" << "\n";
-        m_state = PtraceModule::State::Exited;
-        return false;
-    }
+    // if(ptrace(PTRACE_SETREGS, ull_target_pid, nullptr, &save) == -1)
+    // {
+    //     std::cerr << "SETREGS FAILED" << "\n";
+    //     m_state = PtraceModule::State::Exited;
+    //     return false;
+    // }
 
-    if(ptrace(PTRACE_CONT, ull_target_pid, nullptr, nullptr) == -1)
-    {
-        std::cerr << "UNABLE TO LET TARGET CONTINUE";
-        m_state = PtraceModule::State::Exited;
-        return false;
-    }
+    // if(ptrace(PTRACE_CONT, ull_target_pid, nullptr, nullptr) == -1)
+    // {
+    //     std::cerr << "UNABLE TO LET TARGET CONTINUE";
+    //     m_state = PtraceModule::State::Exited;
+    //     return false;
+    // }
 
     return false;
 }
