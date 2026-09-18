@@ -53,10 +53,15 @@ inline void parse_elf64()
     const auto& shstrtab = section_header[header->e_shstrndx];
     const char* shstrtab_hdr = static_cast<char*>(map) + shstrtab.sh_offset;
     
+    int bytes_total{};
     for(int i{0}; i < header->e_shnum; i++)
     {
         std::cout << shstrtab_hdr + section_header[i].sh_name << "\n";
+        bytes_total += section_header[i].sh_size;
     }
+
+    std::cout << "Total header : " << header->e_shnum << "\n"
+              << "Total bytes  : " << bytes_total << "\n";
 
 
 
