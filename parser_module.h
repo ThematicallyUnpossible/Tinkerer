@@ -60,7 +60,7 @@ inline void parse_elf64()
         bytes_total += section_header[i].sh_size;
     }
 
-    std::cout << "Total header : " << header->e_shnum << "\n"
+    std::cout << "Total sections : " << header->e_shnum << "\n"
               << "Total bytes  : " << bytes_total << "\n";
 
 
