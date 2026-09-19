@@ -61,9 +61,18 @@ inline void parse_elf64()
     }
 
     std::cout << "Total sections : " << header->e_shnum << "\n"
-              << "Total bytes  : " << bytes_total << "\n";
+              << "Total bytes  : " << bytes_total << "\n\n";
 
 
+    Elf64_Phdr* program_header = reinterpret_cast<Elf64_Phdr*>(static_cast<char*>(map) + header->e_phoff);
+
+    for(int i{0}; i < header->e_phnum; i++)
+    {
+        if(program_header[i].p_type == PT_LOAD)
+        {
+            std::cout << "loadable detected at 0x" << program_header[i].p_vaddr << "\n";
+        }
+    }
 
 
 }
