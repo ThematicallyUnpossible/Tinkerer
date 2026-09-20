@@ -62,26 +62,22 @@ int main(int argc, char* argv[]){
 
     if(argc != 2)
     {
-        std::cerr << "Invalid usage. Expected : Tinker <program_name>" << "\n";
+        std::cerr << "Currently using elf parser mode. To debug program please do : sudo /Tinkerer <program_name>" << "\n";
+        parse_elf64();
         return 1;
     }
 
     std::string table_of_choices {
     "1. Inject & hook\n"
-    "2. Parse Elf \n"
     "Enter your choice : "
     };
     while(true)
     {
-        int choice = get_input<int>(table_of_choices, 1, 2);
+        int choice = get_input<int>(table_of_choices, 1, 1);
         clear_input();
         if(choice == 1)
         {
             run_injector(argv[1]);
-        }
-        else if (choice == 2)
-        {
-            parse_elf64();
         }
     }
 
