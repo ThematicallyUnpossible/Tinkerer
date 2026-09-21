@@ -62,7 +62,7 @@ int main(int argc, char* argv[]){
 
     if(argc != 2)
     {
-        std::cerr << "Currently using elf parser mode. To debug program please do : sudo /Tinkerer <program_name>" << "\n";
+        std::cerr << "Currently in elf parser mode. To debug program do : sudo /Tinkerer <program_name>" << "\n";
         parse_elf64();
         return 1;
     }
