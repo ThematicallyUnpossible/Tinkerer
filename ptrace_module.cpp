@@ -130,15 +130,22 @@ bool PtraceModule::Object::inject_loadable()
         return false;
     }
 
-    unsigned lib_index{get_input<unsigned>("Choose queued library's index to be load : ", 0, (m_loadable_list.size()-1) )};
+    unsigned lib_index{};
+    if(m_loadable_list.size() < 2)
+    {
+        lib_index = 0;
+    }
+    else {
+        lib_index = get_input<unsigned>("Choose queued library's index to be load : ", 0, (m_loadable_list.size()-1) );
+    }
 
     LibMeta stolen_loadable{std::move(m_loadable_list[lib_index])};
     m_loadable_list.erase(m_loadable_list.begin()+lib_index); //this can be written when the lib is succesfully written
-    DEBUG_PRINT_LOADABLE_LIST(m_loadable_list);
 
     //////////////////////////////////////////
     /////////////RESERVE/MEM/SPACE////////////
     //////////////////////////////////////////
+    
 
     
     unsigned long long ull_target_pid = std::stoull(m_target_metadata.m_string_target_pid, nullptr,  10);
