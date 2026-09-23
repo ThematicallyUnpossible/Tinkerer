@@ -1,5 +1,7 @@
 #include "ptrace_module.h"
 #include "io_helper.h"
+#include <elf.h>
+#include <fcntl.h>
 #include <iostream>
 #include <fstream>
 #include <filesystem>
@@ -11,6 +13,8 @@
 #include <sys/uio.h>
 #include <dlfcn.h>
 #include "utility.h"
+#include <sys/stat.h>
+#include <sys/mman.h>
 
 std::optional<PtraceModule::Object> PtraceModule::Object::instantiate(const std::string& target_process_name)
 {
@@ -121,7 +125,7 @@ bool PtraceModule::Object::queue_loadable()
     return true;
 }
 
-bool PtraceModule::Object::inject_loadable()
+bool PtraceModule::Object::ptrace_load()
 {
     DEBUG_PRINT_LOADABLE_LIST(m_loadable_list);
     if(m_loadable_list.empty())
@@ -384,6 +388,48 @@ auto cleanup = [&](){
     // }
 
     return false;
+}
+
+bool PtraceModule::Object::manual_load()
+{
+    clear_input();
+    std::string path_to_program{get_input<std::string>("Enter library path : ")};
+
+    int fd = open(path_to_program.c_str(), O_RDWR);
+    if(fd < 0)
+    {
+        std::cerr << "UNABLE TO OPEN LIBRARY" << "\n";
+        return false;
+    }
+
+    struct stat st;
+    fstat(fd, &st);
+
+    void* map = mmap(nullptr, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if(map == MAP_FAILED)
+    {
+        std::cerr << "UNABLE TO ALLOCATE MEM SPACE" << "\n";
+        return false;
+    }
+
+    auto* ehdr = static_cast<Elf64_Ehdr*>(map);
+    if(
+        ehdr->e_ident[EI_MAG0] != ELFMAG0 ||
+        ehdr->e_ident[EI_MAG1] != ELFMAG1 ||
+        ehdr->e_ident[EI_MAG2] != ELFMAG2 ||
+        ehdr->e_ident[EI_MAG3] != ELFMAG3
+    )
+    {
+        munmap(map, st.st_size);
+        std::cerr << "NOT A VALID ELF64 LIBRARY" << "\n";
+        return false;
+    }
+    else
+    {
+        std::cout << "DETECTED ELF64 LIBRARY" << "\n";
+    }
+
+    return true;
 }
 
 const PtraceModule::TargetMetadata& PtraceModule::Object::peek_data() const

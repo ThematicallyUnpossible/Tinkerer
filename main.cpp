@@ -19,17 +19,18 @@ void run_injector(char* argv)
 
     std::string table_of_choices
     {
-        "1. Create loadable \n"
-        "2. Load existing \n"
-        "3. Trigger hook function\n"
-        "4. Exit\n"
+        "1. Create loadable\n"
+        "2. Ptrace load existing\n"
+        "3. Manual load existing\n"
+        "4. Trigger hook function\n"
+        "5. Exit\n"
         "Enter your choice : "
     };
-    int choice{3};
+    int choice{4};
 
     while(true)
     {
-        choice = get_input<int>(table_of_choices, 1, 4);
+        choice = get_input<int>(table_of_choices, 1, 5);
         if(choice == 1)
         {
             clear_input();
@@ -41,13 +42,17 @@ void run_injector(char* argv)
         }
         else if(choice == 2)
         {
-            bool inject_result = PtraceModuleObject->inject_loadable();
+            bool inject_result = PtraceModuleObject->ptrace_load();
         }
-        else if (choice == 3)
+        else if(choice == 3)
+        {
+            bool inject_resultt = PtraceModuleObject->manual_load();
+        }
+        else if (choice == 4)
         {
             trigger_hook_fcn(PtraceModuleObject->peek_data().m_string_target_pid);
         }
-        else if (choice == 4)
+        else if (choice == 5)
         {
             return;
         }
