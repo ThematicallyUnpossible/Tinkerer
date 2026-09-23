@@ -68,7 +68,7 @@ int main(int argc, char* argv[]){
     }
 
     std::string table_of_choices {
-    "1. Ptrace Inject & hook\n"
+    "1. Injector & Hook\n"
     "Enter your choice : "
     };
     while(true)
