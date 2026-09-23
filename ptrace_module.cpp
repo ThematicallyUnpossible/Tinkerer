@@ -426,8 +426,21 @@ bool PtraceModule::Object::manual_load()
     }
     else
     {
-        std::cout << "DETECTED ELF64 LIBRARY" << "\n";
+        std::cout << "detected elf64 library." << "\n";
     }
+
+    Elf64_Phdr* phdr = reinterpret_cast<Elf64_Phdr*>(static_cast<char*>(map) + ehdr->e_phoff);
+
+    int PT_LOAD_counter{};
+    for(int i{0}; i < ehdr->e_phnum; i++)
+    {
+        if(phdr[i].p_type == PT_LOAD)
+        {
+            PT_LOAD_counter++;
+        }
+    }
+    
+    std::cout << "Detected " << PT_LOAD_counter << " PT_LOADs section." << "\n";
 
     return true;
 }
